@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Tailwind CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <title>Welcome</title>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <h1 class="text-xl font-bold text-blue-600">Welcome, {{ email_id }}</h1>
+        <h2 class="text-lg font-semibold mt-4">Past Support Requests</h2>
+        {% if support_requests %}
+            <ul class="list-disc pl-5 mt-2">
+                {% for request in support_requests %}
+                    <li class="mt-2">
+                        <p class="text-gray-700"><strong>Date:</strong> {{ request.date_submitted|date:"Y-m-d H:i" }}</p>
+                        <p class="text-gray-600"><strong>Detail:</strong> {{ request.request_detail }}</p>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-gray-600 mt-2">No past support requests found.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -33,7 +33,7 @@ ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     "daphne",
-    "customer",
+    "support",
     "chat",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.postgres",
     'rest_framework'
 ]
 
@@ -78,12 +79,25 @@ WSGI_APPLICATION = "branch.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
+#     }
+# }
+
+# Use PostgreSQL
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config("POSTGRES_DB_NAME", default="branch"),
+        'USER': config("POSTGRES_DB_USER", default="postgres"),
+        'PASSWORD': config("POSTGRES_DB_PASSWORD", default="admin"),
+        'HOST': config("POSTGRES_DB_HOST", default="localhost"),
+        'PORT': config("POSTGRES_DB_PORT", default="5432"),
     }
 }
+
 
 
 # Password validation
@@ -136,4 +150,11 @@ CHANNEL_LAYERS = {
             "hosts": [("127.0.0.1", 6379)],
         },
     },
+}
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379",
+    }
 }

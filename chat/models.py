@@ -13,7 +13,7 @@ class Customer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
 
     def __str__(self):
-        return self.name
+        return self.user.name
 
 class Agent(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
@@ -21,12 +21,18 @@ class Agent(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
+CONVERSATION_STATUS = (
+    ('OPEN', 'open'),
+    ('ONGOING', 'ongoing'),
+    ('RESOLVED', 'resolved'),
+)
 class Conversation(Timestampable, UUIDable, models.Model):
-    agent = models.ForeignKey(Agent, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    agent_active = models.BooleanField(default=False)
+    status = models.CharField(max_length=20, choices=CONVERSATION_STATUS, default=CONVERSATION_STATUS[0][0])
 
     def __str__(self):
-        return f"{self.customer_name} -> {self.agent.name}"
+        return f"{self.customer.user.name} -> {self.status}"
     
 class Message(Timestampable, UUIDable, models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='message_sender')
@@ -35,7 +41,7 @@ class Message(Timestampable, UUIDable, models.Model):
     is_seen = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['created_at']
 
     def __str__(self) -> str:
         return f"{self.sender}->{self.conversation_id}->{self.text}"

@@ -161,3 +161,9 @@ https://github.com/GeekGawd
 
 Resume:
 https://drive.google.com/file/d/1Ogrce3iTqOOcygo69csCF1SG6udPAYj4/view?usp=sharing
+
+# Resources Used
+
+- [Django Documentation](https://docs.djangoproject.com/en/5.0/)
+- [Django Channels for Websockets](https://channels.readthedocs.io/en/latest/)
+- [Redis](https://redis.io/docs/)

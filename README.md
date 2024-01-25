@@ -158,4 +158,4 @@ repositiories, which can be found on my github:
 https://github.com/GeekGawd
 
 Resume:
-https://drive.google.com/file/d/1w2Su8hzLM5_9KVm14GvLbt9sVpNjYNBt/view?usp=sharing
+https://drive.google.com/file/d/1Ogrce3iTqOOcygo69csCF1SG6udPAYj4/view?usp=sharing

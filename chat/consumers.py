@@ -31,6 +31,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     
     @database_sync_to_async
     def update_conversation(self, conversation_id, agent_active):
+        print(conversation_id, agent_active)
         return Conversation.objects.filter(external_id=conversation_id).update(agent_active=agent_active)
 
     @database_sync_to_async
@@ -49,19 +50,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         self.room_connection_counts[self.room_name] += 1
 
+        print(self.room_connection_counts[self.room_name])
+
         # If connection count is less than 2, and agent active is set true by mistake
         if self.room_connection_counts[self.room_name] <= 2:
             await self.update_conversation(self.room_name, False)
-        
+        else:
+            # Update the room to show that the agent is active
+            await self.update_conversation(self.room_name, True)
+            
         conversation = await self.get_conversation(self.room_name)
         is_conversation_agent_active = conversation.agent_active
         
         if is_conversation_agent_active:
             await self.close(4000)
             return
-        
-        # Update the room to show that the agent is active
-        await self.update_conversation(self.room_name, True)
 
         # Send past messages
         # messages = await self.get_all_messages(self.room_name)
@@ -88,7 +91,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         action = text_data_json.get("action")
 
         if action == "chat_message":
-            message = text_data_json.get("message")
             await self.channel_layer.group_send(
                 self.room_group_name, {"type": "chat.message", "message": text_data_json}
             )

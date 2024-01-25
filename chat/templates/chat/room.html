@@ -76,6 +76,12 @@
             if (messages.action === "canned_messages") {
                 displayCannedMessages(messages.messages);
             }
+            if (messages.action == "chat_resolved") {
+                // redirect to http://localhost:8000/support/agent/{email_id}/
+                var emailId = sessionStorage.getItem("email");
+                var fullUrl = "http://localhost:8000/support/agent/" + encodeURIComponent(emailId) + "/";
+                window.location.href = fullUrl;
+            }
             else{
                 const chatLog = document.querySelector('#chat-log');
                 messages.forEach(message => {
@@ -140,6 +146,18 @@
         
             window.location.href = fullUrl;
         }
+
+        document.querySelector('#chat-message-resolve').onclick = function(e) {
+            // Prepare the message to indicate chat resolution
+            const resolveMessage = {
+                action: "chat_resolved",
+                conversation_id: conversationId,
+                sender__name: sessionStorage.getItem('name'),
+                sender__email: sessionStorage.getItem('email')
+            };
+
+            chatSocket.send(JSON.stringify(resolveMessage));
+        };
         
     </script>    
 </body>

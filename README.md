@@ -98,6 +98,8 @@ Also, implemented the following bonus features:
 
 - ✅ Made UI using Django MVT architecture.
 
+- ✅ Improved the search and lookup performance by storing the search vector in the database and also implement gin indexes.
+
 ## Database Design and Scalability
 
 <p align="center">

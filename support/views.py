@@ -59,20 +59,16 @@ def agent(request, email_id):
     if search_query:
         trigram_queryset = available_support_requests.annotate(
             similarity=TrigramSimilarity('messages__text', search_query)
-        ).filter(similarity__gt=0.07).order_by('-similarity')
-
-        # print(trigram_queryset.values_list())
+        ).filter(similarity__gt=0.1).order_by('-similarity')
 
         vector_queryset = available_support_requests.annotate(
-            search=SearchVector('customer__user__name', 'customer__user__email', 'messages__text')
+            search=SearchVector('customer__user__name_email_vector', 'messages__text_vector')
         ).filter(search=search_query)
-
-        search_queryset = available_support_requests.filter(messages__text__search=search_query)
 
         icontains_queryset = available_support_requests.filter(messages__text__icontains=search_query)
 
         # Combine QuerySets
-        combined_queryset = list(vector_queryset) + list(search_queryset) + list(icontains_queryset) + list(trigram_queryset)
+        combined_queryset = list(vector_queryset) + list(icontains_queryset) + list(trigram_queryset)
 
         # Remove duplicates if needed
         available_support_requests = list(set(combined_queryset))

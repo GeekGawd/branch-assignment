@@ -1,7 +1,7 @@
 from django.db import models
 from branch.behaviours import Timestampable, UUIDable
 from django.contrib.postgres.indexes import GinIndex
-from django.contrib.postgres.search import SearchVectorField
+from django.contrib.postgres.search import SearchVectorField, SearchVector
 
 
 # Create your models here.
@@ -20,6 +20,11 @@ class User(Timestampable, UUIDable, models.Model):
                 name='user_name_email_gin'
             ),
         ]
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        User.objects.filter(pk=self.pk).update(name_email_vector=SearchVector('name', 'email'))
+
 
 class Customer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
@@ -67,3 +72,7 @@ class Message(Timestampable, UUIDable, models.Model):
 
     def __str__(self) -> str:
         return f"{self.sender}->{self.conversation_id}->{self.text}"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        Message.objects.filter(pk=self.pk).update(text_vector=SearchVector('text'))

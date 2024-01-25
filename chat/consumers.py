@@ -3,9 +3,23 @@ import json
 from .models import Conversation, User, Message
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from datetime import datetime, date
-from asgiref.sync import sync_to_async
 from collections import defaultdict
+
+CANNED_MESSAGES = {
+    "greetings": [
+        "Hi, I am the support agent. How can I help you?",
+        "Welcome to Branch Support, How can I help you?",
+        "Hello from Branch, Sorry to hear you are facing this issue, let me help you with this.",
+    ],
+    "ongoing": [
+        "Sorry for the delay. I am looking into your case.",
+        "Let me get the details of your case and get back to you.",
+    ],
+    "resolved": [
+        "Thanks for contacting us. Have a great day!",
+        "Branch is always here to help you. Have a great day!",
+    ],
+}
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -55,8 +69,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
         await self.accept()
+
+        canned_message_greetings = {
+            "action": "canned_messages",
+            "messages": CANNED_MESSAGES["greetings"],
+        }
         
-        # await self.send(text_data=json.dumps(messages))
+        await self.send(text_data=json.dumps(canned_message_greetings))
 
     async def disconnect(self, close_code):
         self.room_connection_counts[self.room_name] -= 1
@@ -68,20 +87,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         action = text_data_json.get("action")
 
-        if action == "fetch_messages":
-            messages = await self.get_all_messages(self.room_name)
-            await self.channel_layer.group_send(
-                self.room_group_name, {"type": "fetch.messages", "messages": messages}
-            )
-        elif action == "chat_message":
+        if action == "chat_message":
             message = text_data_json.get("message")
             await self.channel_layer.group_send(
                 self.room_group_name, {"type": "chat.message", "message": text_data_json}
             )
-
-    async def fetch_messages(self, event):
-        messages = event["messages"]
-        await self.send(text_data=json.dumps(messages))
     
     @database_sync_to_async
     def save_message_to_database(self, data):
@@ -104,3 +114,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         # Send message to WebSocket
         await self.send(text_data=json.dumps([message]))
+
+        # Evaluate message and send canned response
+        if message["is_customer"] == "True":
+            if "thank" in message["text"].lower() or "bye" in message["text"].lower():
+                canned_message_resolved = {
+                    "action": "canned_messages",
+                    "messages": CANNED_MESSAGES["resolved"],
+                }
+                await self.send(text_data=json.dumps(canned_message_resolved))
+            else:
+                canned_message_ongoing = {
+                    "action": "canned_messages",
+                    "messages": CANNED_MESSAGES["ongoing"],
+                }
+                await self.send(text_data=json.dumps(canned_message_ongoing))

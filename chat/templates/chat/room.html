@@ -7,15 +7,23 @@
 </head>
 <body>
     <textarea id="chat-log" cols="100" rows="20"></textarea><br>
-    <input id="chat-message-input" type="text" size="100"><br>
-    <input id="chat-message-submit" type="button" value="Send">
-    {% if is_customer %}
-        <input id="chat-message-resolve" data-url="{% url 'chat:resolve' %}" type="button" value="Resolve">
+    {% if not is_resolved %}
+        {% if not is_customer %}
+            <div id="canned-messages-container">
+            </div>
+        {% endif %}
+        <input id="chat-message-input" type="text" size="100"><br>
+        <input id="chat-message-submit" type="button" value="Send">
+        {% if is_customer %}
+            <input id="chat-message-resolve" data-url="{% url 'chat:resolve' %}" type="button" value="Resolve">
+        {% endif %}
     {% endif %}
     {{ conversation_id|json_script:"conversation-id" }}
+    {{ is_customer|json_script:"is-customer" }}
     <script>
         const conversationId = JSON.parse(document.getElementById('conversation-id').textContent);
-        
+        const isCustomer = JSON.parse(document.getElementById('is-customer').textContent) || sessionStorage.getItem('is_customer');
+
         const chatSocket = new WebSocket(
             'ws://'
             + window.location.host
@@ -26,18 +34,79 @@
 
         chatSocket.onopen = function(e) {
             console.log('Chat socket opened');
-            chatSocket.send(JSON.stringify({
-                "action": "fetch_messages"
-            }));
+            fetchInitialMessages();
         };
+
+        // Function to fetch initial messages
+        function fetchInitialMessages() {
+            const url = '{% url "chat:get-all-messages" %}'; // Replace with the actual URL
+            const headers = new Headers();
+            headers.append('Content-Type', 'application/json');
+            headers.append('X-CSRFToken', '{{ csrf_token }}');
+
+            const body = JSON.stringify({
+                conversation_id: conversationId
+            });
+
+            fetch(url, {
+                method: 'POST',
+                headers: headers,
+                body: body
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(messages => {
+                const chatLog = document.querySelector('#chat-log');
+                messages = messages.messages;
+                for(let i=0; i < messages.length; i++){
+                    chatLog.value += `${messages[i].sender__name}: ${messages[i].text}\n\n`;
+                }
+            })
+            .catch(error => {
+                console.error('Failed to fetch initial messages', error);
+            });
+        }
     
         chatSocket.onmessage = function(e) {
             const messages = JSON.parse(e.data);
-            const chatLog = document.querySelector('#chat-log');
-            messages.forEach(message => {
-                chatLog.value += `${message.sender__name}: ${message.text}\n\n`;
-            });
+            if (messages.action === "canned_messages") {
+                displayCannedMessages(messages.messages);
+            }
+            else{
+                const chatLog = document.querySelector('#chat-log');
+                messages.forEach(message => {
+                    chatLog.value += `${message.sender__name}: ${message.text}\n\n`;
+                });
+            }
         };
+
+        function displayCannedMessages(messages) {
+            const container = document.getElementById('canned-messages-container');
+            container.innerHTML = '';
+
+            messages.forEach(msg => {
+                const button = document.createElement('button');
+                button.className = 'canned-message-btn';
+                button.textContent = msg;
+                button.onclick = () => sendWebSocketMessage(msg);
+                container.appendChild(button);
+            });
+        }
+
+        function sendWebSocketMessage(message) {
+            chatSocket.send(JSON.stringify({
+                'text': message,
+                "action": "chat_message",
+                "sender__name": sessionStorage.getItem('name'),
+                "sender__email": sessionStorage.getItem('email'),
+                "conversation_id": conversationId,
+                "is_customer": isCustomer
+        }));
+}
     
         chatSocket.onclose = function(e) {
             console.error('Chat socket closed unexpectedly');
@@ -58,7 +127,8 @@
                 "action": "chat_message",
                 "sender__name": sessionStorage.getItem('name'),
                 "sender__email": sessionStorage.getItem('email'),
-                "conversation_id": conversationId
+                "conversation_id": conversationId,
+                "is_customer": isCustomer
             }));
             messageInputDom.value = '';
         };

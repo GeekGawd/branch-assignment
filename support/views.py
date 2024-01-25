@@ -3,6 +3,7 @@ from chat.models import Conversation, Message, Agent, User, Customer, CONVERSATI
 from django.db.models import Subquery, OuterRef
 from django.contrib import messages
 from django.contrib.postgres.search import TrigramSimilarity, SearchVector
+from django.db.models import F
 
 
 # Create your views here.
@@ -22,10 +23,15 @@ def customer(request, email_id):
         conversation_id=OuterRef('pk')
     ).order_by('created_at')
 
-    support_requests = Conversation.objects.filter(customer__user__email=email_id).exclude(status=CONVERSATION_STATUS[2][0]).annotate(
+    open_support_requests = Conversation.objects.filter(customer__user__email=email_id).exclude(status=CONVERSATION_STATUS[2][0]).annotate(
         first_message=Subquery(first_message_subquery.values('text')[:1])
     )
-    return render(request, "chat/customer.html", {"email_id": email_id, "support_requests": support_requests})
+
+    resolved_support_requests = Conversation.objects.filter(customer__user__email=email_id, status=CONVERSATION_STATUS[2][0]).annotate(
+        first_message=Subquery(first_message_subquery.values('text')[:1])
+    )
+
+    return render(request, "chat/customer.html", {"email_id": email_id, "resolved_support_requests": resolved_support_requests, "open_support_requests": open_support_requests})
 
 def agent_form(request):
     if request.method == "POST":

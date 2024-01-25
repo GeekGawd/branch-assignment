@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: branch
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+
+  redis:
+    image: "redis:alpine"
+
+  web:
+    build: .
+    command: >
+      bash -c "python manage.py makemigrations &&
+               python manage.py migrate &&
+               python manage.py create_fake_chats &&
+               daphne branch.asgi:application -b 0.0.0.0 -p 8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    environment:
+      SECRET_KEY: "django-insecure-t1xmw&dqyhc+_&b@x86!kt7o1@p+0_v%g2t5@b3+pz9_#t)7fq"
+      CHANNEL_HOST: "redis"
+      REDIS_URL: "redis://redis:6379/0"
+      POSTGRES_DB_NAME: "branch"
+      POSTGRES_DB_USER: "postgres"
+      POSTGRES_DB_PASSWORD: "admin"
+      POSTGRES_DB_HOST: "db"
+      POSTGRES_DB_PORT: "5432"
+      DJANGO_SETTINGS_MODULE: 'branch.settings'
+
+volumes:
+  postgres_data:

@@ -77,7 +77,6 @@
                 displayCannedMessages(messages.messages);
             }
             if (messages.action == "chat_resolved") {
-                // redirect to http://localhost:8000/support/agent/{email_id}/
                 var emailId = sessionStorage.getItem("email");
                 var fullUrl = "http://localhost:8000/support/agent/" + encodeURIComponent(emailId) + "/";
                 window.location.href = fullUrl;
@@ -140,15 +139,7 @@
         };
         
         document.querySelector('#chat-message-resolve').onclick = function(e){
-            var emailId = sessionStorage.getItem("email");
-            var baseUrl = document.getElementById('chat-message-resolve').getAttribute('data-url');
-            var fullUrl = baseUrl + '?email_id=' + encodeURIComponent(emailId) + '&conversation_id=' + encodeURIComponent(conversationId);
-        
-            window.location.href = fullUrl;
-        }
-
-        document.querySelector('#chat-message-resolve').onclick = function(e) {
-            // Prepare the message to indicate chat resolution
+            // Send resolution message on websockets 
             const resolveMessage = {
                 action: "chat_resolved",
                 conversation_id: conversationId,
@@ -157,7 +148,13 @@
             };
 
             chatSocket.send(JSON.stringify(resolveMessage));
-        };
+            // Redirect to resolve page
+            var emailId = sessionStorage.getItem("email");
+            var baseUrl = document.getElementById('chat-message-resolve').getAttribute('data-url');
+            var fullUrl = baseUrl + '?email_id=' + encodeURIComponent(emailId) + '&conversation_id=' + encodeURIComponent(conversationId);
+        
+            window.location.href = fullUrl;
+        }
         
     </script>    
 </body>

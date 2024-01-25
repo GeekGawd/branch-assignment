@@ -52,7 +52,7 @@ def agent(request, email_id):
     
 
     # Available conversations would be those where the agents are inactive
-    available_support_requests = Conversation.objects.filter(agent_active=False).annotate(
+    available_support_requests = Conversation.objects.filter(agent_active=False).exclude(status=CONVERSATION_STATUS[2][0]).annotate(
         first_message=Subquery(first_message_subquery.values('text')[:1])
     )
 

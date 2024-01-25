@@ -4,12 +4,14 @@ from chat.models import User, Customer, Agent, Conversation, Message
 from faker import Faker
 from collections import defaultdict
 from datetime import datetime
+from django.conf import settings
+
 
 class Command(BaseCommand):
     help = 'Import chats from a CSV file'
 
     def handle(self, *args, **kwargs):
-        file_path = r"/home/suyash/projects/Branch-Assignment/GeneralistRails_Project_MessageData.csv"
+        file_path = settings.BASE_DIR / "GeneralistRails_Project_MessageData.csv"
 
         faker = Faker()
         user_message_groups = defaultdict(list)

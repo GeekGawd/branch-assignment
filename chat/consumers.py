@@ -126,7 +126,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         # Evaluate message and send canned response
         if message["is_customer"] == "True":
-            if "thank" in message["text"].lower() or "bye" in message["text"].lower():
+            if "thank" in message["text"].lower() or "bye" in message["text"].lower() or "resolved" in message["text"].lower():
                 canned_message_resolved = {
                     "action": "canned_messages",
                     "messages": CANNED_MESSAGES["resolved"],

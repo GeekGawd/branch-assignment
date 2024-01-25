@@ -43,5 +43,9 @@ class Command(BaseCommand):
                     conversation_id=conversation, 
                     created_at=timestamp
                 )
+        
+        for i in range(10):
+            user = User.objects.create(name=f"agent{i}", email=f"agent{i}@branch.com")
+            Agent.objects.create(user=user)
 
         self.stdout.write(self.style.SUCCESS('Successfully imported chats and created fake users'))

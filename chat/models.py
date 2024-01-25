@@ -9,7 +9,7 @@ from django.contrib.postgres.search import SearchVectorField
 class User(Timestampable, UUIDable, models.Model):
     name = models.CharField(max_length=100)
     email = models.EmailField(max_length=100)
-    name_email_vector = SearchVectorField(null=True)
+    name_email_vector = SearchVectorField(null=True, blank=True)
     def __str__(self):
         return self.name
     
@@ -32,6 +32,9 @@ class Agent(models.Model):
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return self.user.name
 
 CONVERSATION_STATUS = (
     ('OPEN', 'open'),
@@ -51,7 +54,7 @@ class Message(Timestampable, UUIDable, models.Model):
     text = models.TextField()
     conversation_id = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name="messages")
     is_seen = models.BooleanField(default=False)
-    text_vector = SearchVectorField(null=True)
+    text_vector = SearchVectorField(null=True, blank=True)
 
     class Meta:
         ordering = ['created_at']

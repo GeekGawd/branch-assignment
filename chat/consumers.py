@@ -53,16 +53,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         print(self.room_connection_counts[self.room_name])
 
         # If connection count is less than 2, and agent active is set true by mistake
-        if self.room_connection_counts[self.room_name] <= 2:
+        if self.room_connection_counts[self.room_name] < 2:
             await self.update_conversation(self.room_name, False)
         else:
             # Update the room to show that the agent is active
             await self.update_conversation(self.room_name, True)
-            
-        conversation = await self.get_conversation(self.room_name)
-        is_conversation_agent_active = conversation.agent_active
         
-        if is_conversation_agent_active:
+        if self.room_connection_counts[self.room_name] > 2:
             await self.close(4000)
             return
 
@@ -82,7 +79,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         self.room_connection_counts[self.room_name] -= 1
-        if close_code == 4000:
+        if close_code == 4000 or self.room_connection_counts[self.room_name] < 2:
             await self.update_conversation(self.room_name, False)
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
@@ -94,7 +91,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(
                 self.room_group_name, {"type": "chat.message", "message": text_data_json}
             )
-    
+        if action == "chat_resolved":
+            await self.channel_layer.group_send(
+                self.room_group_name, {"type": "chat.resolved", "message": text_data_json}
+            )
+            # close connection
+            # await self.close(3000)
+
+    async def chat_resolved(self, event):
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps(event["message"]))
+
     @database_sync_to_async
     def save_message_to_database(self, data):
         content = data["text"]

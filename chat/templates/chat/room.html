@@ -73,12 +73,14 @@
     
         chatSocket.onmessage = function(e) {
             const messages = JSON.parse(e.data);
+            console.log(messages);
             if (messages.action === "canned_messages") {
                 displayCannedMessages(messages.messages);
             }
-            if (messages.action == "chat_resolved") {
+            console.log(sessionStorage.getItem('is_customer'));
+            if (messages.action === "chat_resolved" && sessionStorage.getItem('is_customer') === 'false'){
                 var emailId = sessionStorage.getItem("email");
-                var fullUrl = "http://localhost:8000/support/agent/" + encodeURIComponent(emailId) + "/";
+                var fullUrl = "http://localhost:8000/support/agent/" + emailId;
                 window.location.href = fullUrl;
             }
             else{
@@ -146,8 +148,8 @@
                 sender__name: sessionStorage.getItem('name'),
                 sender__email: sessionStorage.getItem('email')
             };
-
             chatSocket.send(JSON.stringify(resolveMessage));
+            
             // Redirect to resolve page
             var emailId = sessionStorage.getItem("email");
             var baseUrl = document.getElementById('chat-message-resolve').getAttribute('data-url');
